@@ -1,12 +1,13 @@
 // controllers/projectController.js
 import Project from '../models/Project.js';
+import Hackathon from '../models/Hackathon.js';
 import asyncHandler from 'express-async-handler';
 
 // @desc    Create new project
 // @route   POST /api/projects
 // @access  Private
 export const createProject = asyncHandler(async (req, res) => {
-  const { title, description, tags, githubUrl, liveUrl, imageUrl } = req.body;
+  const { title, description, tags, githubUrl, liveUrl, imageUrl, hackathonId } = req.body;
 
   if (!title) {
     res.status(400);
@@ -21,6 +22,7 @@ export const createProject = asyncHandler(async (req, res) => {
     liveUrl,
     imageUrl,
     createdBy: req.user._id,
+    hackathon: hackathonId,
   });
 
   const createdProject = await project.save();
@@ -84,3 +86,51 @@ export const deleteProject = asyncHandler(async (req, res) => {
   res.json({ message: 'Project deleted' });
 });
 
+// @desc    Submit project to a hackathon
+// @route   POST /api/hackathons/:id/submit
+// @access  Private (users only)
+export const submitProjectToHackathon = asyncHandler(async (req, res) => {
+  const { id: hackathonId } = req.params;
+  const userId = req.user._id;
+
+  const { title, description, tags, githubUrl, liveUrl, imageUrl } = req.body;
+
+  // 1. Find the hackathon
+  const hackathon = await Hackathon.findById(hackathonId);
+  if (!hackathon) {
+    res.status(404);
+    throw new Error('Hackathon not found');
+  }
+
+  // 2. Check if user is registered
+  const isRegistered = hackathon.participants.includes(userId);
+  if (!isRegistered) {
+    res.status(403);
+    throw new Error('You are not registered for this hackathon');
+  }
+
+  // 3. Prevent duplicate submissions
+  const existing = await Project.findOne({ hackathon: hackathonId, createdBy: userId });
+  if (existing) {
+    res.status(400);
+    throw new Error('You have already submitted a project for this hackathon');
+  }
+
+  // 4. Create project
+  const project = new Project({
+    title,
+    description,
+    tags,
+    githubUrl,
+    liveUrl,
+    imageUrl,
+    createdBy: userId,
+    hackathon: hackathonId,
+  });
+
+  const createdProject = await project.save();
+  res.status(201).json({
+    message: 'Project submitted to hackathon successfully',
+    project: createdProject,
+  });
+});

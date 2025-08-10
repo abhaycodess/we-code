@@ -1,5 +1,7 @@
-import Post from '../models/post.js';
+import Post from '../models/Post.js';
 import Notification from '../models/Notification.js';
+import asyncHandler from 'express-async-handler';
+
 
 // ✅ Create a post
 export const createPost = async (req, res) => {
@@ -20,19 +22,39 @@ export const createPost = async (req, res) => {
 };
 
 // ✅ Get all posts
-export const getAllPosts = async (req, res) => {
-  try {
-    const posts = await Post.find()
-      .populate('user', 'username')
-      .populate('comments.user', 'username')
-      .populate('comments.replies.user', 'username')
-      .sort({ createdAt: -1 });
+export const getAllPosts = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
 
-    res.status(200).json(posts);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch posts', error });
-  }
-};
+  // 🔍 ADD THIS: Search filter logic
+  const searchQuery = req.query.search || '';
+  const keyword = searchQuery
+    ? {
+        $or: [
+          { title: { $regex: searchQuery, $options: 'i' } },
+          { description: { $regex: searchQuery, $options: 'i' } },
+          { tags: { $regex: searchQuery, $options: 'i' } },
+        ],
+      }
+    : {};
+
+  // ✅ Combine with pagination
+  const total = await Post.countDocuments(keyword);
+  const posts = await Post.find(keyword)
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .populate('createdBy', 'username avatar');
+
+  res.status(200).json({
+    success: true,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
+    posts,
+  });
+});
+
 
 // ✅ Get a single post
 export const getPostById = async (req, res) => {

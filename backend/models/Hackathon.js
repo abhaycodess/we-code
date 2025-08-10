@@ -40,3 +40,4 @@ const hackathonSchema = new mongoose.Schema({
 
 // ✅ Export using `export const`
 export const Hackathon = mongoose.model('Hackathon', hackathonSchema);
+export default Hackathon;

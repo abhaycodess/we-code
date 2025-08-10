@@ -30,31 +30,12 @@ const postSchema = new mongoose.Schema(
         reportedAt: { type: Date, default: Date.now },
       },
     ],
+
+    // OPTIONAL: store comment IDs if you want
     comments: [
       {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-        },
-        text: { type: String, required: true },
-        replies: [
-          {
-            user: {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: 'User',
-            },
-            text: { type: String, required: true },
-            createdAt: { type: Date, default: Date.now },
-          },
-        ],
-        reports: [
-          {
-            reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-            reason: { type: String },
-            reportedAt: { type: Date, default: Date.now },
-          },
-        ],
-        createdAt: { type: Date, default: Date.now },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Comment',
       },
     ],
   },

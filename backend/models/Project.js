@@ -1,4 +1,3 @@
-// models/Project.js
 import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema(
@@ -18,11 +17,16 @@ const projectSchema = new mongoose.Schema(
       type: String,
     },
     imageUrl: {
-      type: String, // optional thumbnail or banner image
+      type: String,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
+    },
+    hackathon: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Hackathon',
       required: true,
     },
   },
@@ -31,4 +35,3 @@ const projectSchema = new mongoose.Schema(
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;
-

@@ -1,23 +1,48 @@
+import asyncHandler from 'express-async-handler';
 import Notification from '../models/Notification.js';
 
-export const getNotifications = async (req, res) => {
-  try {
-    const notifications = await Notification.find({ recipient: req.user._id })
-      .sort({ createdAt: -1 })
-      .populate('sender', 'username') // Optional
-      .populate('post', 'text');      // Optional
-    res.status(200).json(notifications);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch notifications' });
-  }
-};
+// ✅ Get all notifications for the logged-in user
+export const getNotifications = asyncHandler(async (req, res) => {
+  const notifications = await Notification.find({ recipient: req.user._id })
+    .sort({ createdAt: -1 });
 
-export const markNotificationsAsRead = async (req, res) => {
-  try {
-    await Notification.updateMany({ recipient: req.user._id, isRead: false }, { isRead: true });
-    res.status(200).json({ message: 'Notifications marked as read' });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to update notifications' });
+  res.status(200).json({
+    success: true,
+    count: notifications.length,
+    notifications,
+  });
+});
+
+// ✅ Mark all notifications as read
+export const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany(
+    { recipient: req.user._id, isRead: false },
+    { $set: { isRead: true } }
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'All notifications marked as read',
+  });
+});
+
+// ✅ Mark a specific notification as read
+export const markNotificationAsRead = asyncHandler(async (req, res) => {
+  const notification = await Notification.findById(req.params.id);
+
+  if (!notification || notification.recipient.toString() !== req.user._id.toString()) {
+    return res.status(404).json({
+      success: false,
+      message: 'Notification not found or unauthorized',
+    });
   }
-};
+
+  notification.isRead = true;
+  await notification.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Notification marked as read',
+  });
+});
 

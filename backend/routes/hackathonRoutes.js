@@ -1,24 +1,26 @@
 import express from 'express';
 import protect from '../middleware/protect.js';
 import restrictTo from '../middleware/restrictTo.js';
-
+import upload from '../middleware/uploadMiddleware.js'; // 🔹 Multer for memory upload
 import {
   createHackathon,
   getAllHackathons,
   getHackathonById,
   registerUserForHackathon,
-  getParticipantsForHackathon
+  getParticipantsForHackathon,
+  getHackathonSubmissions,
+  uploadProblemStatement // 🔹 New controller
 } from '../controllers/hackathonController.js';
 
 const router = express.Router();
 
 /* 
-|--------------------------------------------------------------------------
-| Hackathon Routes
-|--------------------------------------------------------------------------
-| Route Prefix: /api/hackathons
-| Access: Public, Users, Organizations
-| Description: Handles creation, listing, registration, and participant views.
+|-------------------------------------------------------------------------- 
+| Hackathon Routes 
+|-------------------------------------------------------------------------- 
+| Route Prefix: /api/hackathons 
+| Access: Public, Users, Organizations 
+| Description: Handles creation, listing, registration, and participant views. 
 */
 
 /**
@@ -56,18 +58,24 @@ router.post('/:id/register', protect, restrictTo('user'), registerUserForHackath
  */
 router.get('/:id/participants', protect, restrictTo('organization'), getParticipantsForHackathon);
 
+/**
+ * @route   GET /api/hackathons/:id/submissions
+ * @desc    View submitted projects for a hackathon
+ * @access  Private (Organizations only)
+ */
+router.get('/:id/submissions', protect, restrictTo('organization'), getHackathonSubmissions);
 
-/* 
-// 🔜 Future Features – Placeholders for clean scaling:
-
-// 🔹 Submit project for a hackathon
-// router.post('/:id/submit', protect, restrictTo('user'), submitProject);
-
-// 🔹 View submitted projects for a hackathon
-// router.get('/:id/submissions', protect, restrictTo('organization'), getSubmissions);
-
-// 🔹 Post a problem statement for a hackathon
-// router.post('/:id/problem', protect, restrictTo('organization'), postProblemStatement);
-*/
+/**
+ * @route   POST /api/hackathons/:id/upload-problem
+ * @desc    Upload a problem statement file (PDF/DOCX) for a hackathon
+ * @access  Private (Organizations only)
+ */
+router.post(
+  '/:id/upload-problem',
+  protect,
+  restrictTo('organization'),
+  upload.single('file'), // Expecting a 'file' field in form-data
+  uploadProblemStatement
+);
 
 export default router;
