@@ -1,33 +1,28 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import MainLayout from '../layouts/MainLayout';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from '../pages/LandingPage';
-import UserHomePage from '../pages/UserHomePage';
-import ProfilePage from '../pages/ProfilePage';
 import LoginPage from '../pages/LoginPage';
 import SignUpPage from '../pages/SignUpPage';
+import UserHomePage from '../pages/UserHomePage';
+import ProfilePage from '../pages/ProfilePage';
+import Navbar from '../components/Navbar'; // Import Navbar
+import { Box } from '@mui/material'; // Import Box for layout
 
-const AppRoutes = () => {
-  // Placeholder for auth state. In a real app, you'd get this from Redux or context.
-  const isLoggedIn = false;
-
+function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<MainLayout withSidebar={false} />}>
-            <Route path="/" element={!isLoggedIn ? <LandingPage /> : <Navigate to="/home" />} />
-        </Route>
-
-        <Route element={<MainLayout />}>
-          <Route path="/home" element={isLoggedIn ? <UserHomePage /> : <Navigate to="/login" />} />
-          <Route path="/profile/:userId" element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" />} />
-        </Route>
-
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-      </Routes>
-    </BrowserRouter>
+    <Router>
+      <Navbar /> {/* Render Navbar on all pages */}
+      <Box sx={{ mt: '64px', p: 3 }}> {/* Add margin top to avoid content being hidden by Navbar */}
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/home" element={<UserHomePage />} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
+        </Routes>
+      </Box>
+    </Router>
   );
-};
+}
 
 export default AppRoutes;
